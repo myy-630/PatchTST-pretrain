@@ -52,6 +52,7 @@ DATA_DIR = Path(__file__).resolve().parent.parent.parent / "AF"
 DEFAULT_PATCH_LEN = 12    # samples per patch
 DEFAULT_STRIDE = 12       # stride = patch_len for non-overlap (SSL)
 DEFAULT_MASK_RATIO = 0.4  # fraction of patches to mask
+DEFAULT_MASK_TYPE = "random"
 REVIN_EPS = 1e-5
 
 
@@ -158,6 +159,7 @@ class MaskedPretrainDataset(BaseECGDataset):
         patch_len: int = DEFAULT_PATCH_LEN,
         stride: int = DEFAULT_STRIDE,
         mask_ratio: float = DEFAULT_MASK_RATIO,
+        mask_type: str = DEFAULT_MASK_TYPE,
         revin_norm: bool = True,
         seed: Optional[int] = None,
         mode: str = "train",
@@ -168,6 +170,7 @@ class MaskedPretrainDataset(BaseECGDataset):
         self.patch_len = patch_len
         self.stride = stride
         self.mask_ratio = mask_ratio
+        self.mask_type = mask_type
         self.revin_norm = revin_norm
         self.base_seed = seed
         self.mode = mode
@@ -182,9 +185,9 @@ class MaskedPretrainDataset(BaseECGDataset):
 
         log.info(
             "MaskedPretrainDataset: mode=%s  patch_len=%d  stride=%d  "
-            "num_patches=%d  mask_ratio=%.1f  revin=%s  base_seed=%s",
+            "num_patches=%d  mask_ratio=%.1f  mask_type=%s  revin=%s  base_seed=%s",
             mode, patch_len, stride, self.num_patches, mask_ratio,
-            revin_norm, seed,
+            mask_type, revin_norm, seed,
         )
 
     def set_epoch(self, epoch: int) -> None:
@@ -210,6 +213,31 @@ class MaskedPretrainDataset(BaseECGDataset):
 
         return np.random.default_rng(s)
 
+    def _sample_mask(self, n_channels: int, rng: np.random.Generator) -> torch.Tensor:
+        """Sample a patch mask according to the configured mask strategy."""
+        n_mask = max(1, int(self.num_patches * self.mask_ratio))
+        mask = torch.zeros((n_channels, self.num_patches), dtype=torch.bool)
+        mask_type = self.mask_type.lower().replace("-", "_")
+
+        if mask_type in {"random", "random_independent", "independent"}:
+            for ch in range(n_channels):
+                mask_idx = rng.choice(self.num_patches, size=n_mask, replace=False)
+                mask[ch, mask_idx] = True
+            return mask
+
+        if mask_type in {"random_synchronized", "synchronized", "random_sync", "sync"}:
+            mask_idx = rng.choice(self.num_patches, size=n_mask, replace=False)
+            mask[:, mask_idx] = True
+            return mask
+
+        if mask_type in {"block", "block_mask"}:
+            start_max = self.num_patches - n_mask
+            start = int(rng.integers(0, start_max + 1)) if start_max > 0 else 0
+            mask[:, start:start + n_mask] = True
+            return mask
+
+        raise ValueError(f"Unsupported mask_type: {self.mask_type}")
+
     def __getitem__(self, idx: int) -> dict:
         sample = super().__getitem__(idx)
         signal = sample["signal"]            # (C, L), torch.float32
@@ -224,19 +252,11 @@ class MaskedPretrainDataset(BaseECGDataset):
         patches = signal.unfold(dimension=-1, size=self.patch_len,
                                 step=self.stride)                  # (C, N, P)
 
-        # ---- Patch-level random masking ----
-        n_mask = max(1, int(self.num_patches * self.mask_ratio))
-
         # Per-sample RNG (train: epoch-dependent; val: deterministic)
         rng = self._rng_for_sample(idx)
 
-        # Per-channel independent masking (official default)
-        mask = torch.zeros((signal.shape[0], self.num_patches),
-                           dtype=torch.bool)
-        for ch in range(signal.shape[0]):
-            mask_idx = rng.choice(self.num_patches, size=n_mask,
-                                  replace=False)
-            mask[ch, mask_idx] = True
+        # ---- Patch-level masking ----
+        mask = self._sample_mask(signal.shape[0], rng)
 
         # Create masked version
         masked_patches = patches.clone()
