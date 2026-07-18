@@ -11,7 +11,7 @@ fi
 python -m venv --system-site-packages .venv
 source .venv/bin/activate
 
-python -m pip install --upgrade pip setuptools wheel
+python -m pip install --upgrade pip "setuptools<82" wheel
 
 # Keep the CUDA-enabled torch package from the AutoDL image.
 grep -viE '^(torch|torchvision|torchaudio)([<=> ]|$)' requirements.txt > /tmp/patchtst_requirements_no_torch.txt
