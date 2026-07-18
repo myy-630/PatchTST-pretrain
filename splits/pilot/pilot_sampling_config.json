@@ -1,0 +1,11 @@
+{
+  "random_seed": 42,
+  "train_source": "E:\\python\u7ec3\u4e60\\\u6691\u5047\\splits\\train.csv",
+  "val_source": "E:\\python\u7ec3\u4e60\\\u6691\u5047\\splits\\val.csv",
+  "pilot_train_size": 20000,
+  "pilot_val_size": 4000,
+  "sampling_method": "stratified_by_record_id_proportional",
+  "stratification_column": "record_id",
+  "sort_order": "record_id, start_sample",
+  "created": "2026-07-17T10:49:45"
+}

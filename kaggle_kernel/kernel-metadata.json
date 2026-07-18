@@ -1,0 +1,17 @@
+{
+  "id": "meiyangyang630/patchtst-ecg-ssl-pilot",
+  "title": "PatchTST ECG SSL Pilot",
+  "code_file": "run_ab.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "dataset_sources": [
+    "meiyangyang630/codedataset",
+    "meiyangyang630/ecgdatasetmyy"
+  ],
+  "competition_sources": [],
+  "kernel_sources": []
+}

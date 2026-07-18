@@ -1,0 +1,60 @@
+# PatchTST SSL Pretraining — Full Configuration
+# ================================================
+# Purpose: Full masked pretraining on SHDB-AF train set.
+# val.csv for model selection; test.csv NEVER used.
+#
+# Hyperparameters marked [official] come from PatchTST paper / code defaults.
+# [ecg] = adjusted for 30s 200Hz 2-lead ECG.
+# [tune] = pending experimental validation.
+
+# ── Data ──────────────────────────────────────────
+data:
+  train_csv: "splits/train.csv"
+  val_csv:   "splits/val.csv"
+  test_csv:  "splits/test.csv"         # NOT used in pretraining
+  data_dir:  "AF/"
+  seq_len:   6000                       # [ecg] 30 s × 200 Hz
+  n_channels: 2                         # [ecg] Lead I + Lead II
+
+# ── Patching & Masking ────────────────────────────
+pretrain:
+  patch_len:   12                       # [official] 60 ms at 200 Hz
+  stride:      12                       # [official] SSL non-overlap
+  patch_num:   500                      # [derived] (6000-12)//12 + 1
+  mask_ratio:  0.4                      # [official] 200/500 patches masked
+  mask_type:   "random"                 # [official] per-channel independent
+  revin_norm:  true                     # [official] per-instance normalization
+
+# ── Model ─────────────────────────────────────────
+model:
+  d_model:     128                      # [official] embedding dim
+  n_heads:     16                       # [official] split d_model evenly
+  n_layers:    3                        # [official] 3 transformer layers
+  d_ff:        256                      # [official] 4 × d_model
+  dropout:     0.1                      # [official]
+  max_patches: 1024                     # [derived] buffer > patch_num
+
+# ── Training ──────────────────────────────────────
+training:
+  epochs:      100                      # [tune] early stopping may reduce
+  batch_size:  64                       # [tune] depends on GPU VRAM
+  optimizer:   "adamw"                  # [official]
+  lr:          1.0e-4                   # [official] pretrain default
+  weight_decay: 0.05                    # [tune] small regularization
+  grad_clip:   1.0                      # [official]
+  scheduler:   "cosine"                 # [tune] cosine annealing
+  warmup_epochs: 5                      # [tune] linear warmup
+  seed:        42                       # [fixed]
+  num_workers: 4                        # DataLoader workers
+  mixed_precision: "fp16"               # [tune] if GPU supports AMP
+  device:      "cuda"
+
+# ── Checkpoint ────────────────────────────────────
+checkpoint:
+  save_dir:     "checkpoints/full/"
+  save_best:    true
+  monitor:      "val_loss"
+  mode:         "min"
+  save_last:    true                    # resume from last.pt if interrupted
+  resume:       false                   # set true to resume
+  save_every_n_epochs: 5                # periodic full snapshot

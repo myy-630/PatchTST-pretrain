@@ -1,0 +1,62 @@
+# PatchTST SSL Pretraining — Pilot Configuration
+# =================================================
+# Purpose: GPU smoke test (1-2 epochs) to verify:
+#   - GPU memory fits
+#   - training speed (windows/sec)
+#   - loss decreases
+#   - checkpoint I/O works
+#   - no NaN / Inf at full model scale
+#
+# Uses REAL model architecture and REAL train/val splits.
+# Only difference from full: fewer epochs.
+
+# ── Data ──────────────────────────────────────────
+data:
+  train_csv: "splits/train.csv"
+  val_csv:   "splits/val.csv"
+  test_csv:  "splits/test.csv"         # NOT used in pretraining
+  data_dir:  "raw_wfdb/"
+  seq_len:   6000                       # 30 s × 200 Hz  [ECG fixed]
+  n_channels: 2                         # Lead I + Lead II  [ECG fixed]
+
+# ── Patching & Masking ────────────────────────────
+pretrain:
+  patch_len:   12                       # [official default]
+  stride:      12                       # SSL: non-overlap  [official default]
+  patch_num:   500                      # (6000-12)//12 + 1  [derived]
+  mask_ratio:  0.4                      # 40% patches masked
+  mask_type:   "random"                 # per-channel independent
+  revin_norm:  true                     # per-instance normalization
+
+# ── Model ─────────────────────────────────────────
+model:
+  d_model:     128                      # embedding dim
+  n_heads:     16                       # attention heads
+  n_layers:    3                        # encoder layers
+  d_ff:        256                      # feed-forward dim
+  dropout:     0.1
+  max_patches: 1024                     # PE buffer
+
+# ── Training ──────────────────────────────────────
+training:
+  epochs:      3                        # PILOT
+  batch_size:  32
+  optimizer:   "adamw"
+  lr:          1.0e-3
+  weight_decay: 0.0
+  grad_clip:   1.0
+  scheduler:   "none"
+  warmup_epochs: 0
+  seed:        42
+  num_workers: 2
+  mixed_precision: "fp32"
+  device:      "cuda"
+
+# ── Checkpoint ────────────────────────────────────
+checkpoint:
+  save_dir:     "checkpoints/pilot/"
+  save_best:    true
+  monitor:      "val_loss"
+  mode:         "min"
+  save_last:    true
+  resume:       false

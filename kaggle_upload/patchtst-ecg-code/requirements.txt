@@ -1,0 +1,4 @@
+# Kaggle provides: torch, numpy, pandas, matplotlib, scipy, scikit-learn, tqdm
+# Only install packages NOT pre-installed on Kaggle GPU environment
+wfdb>=4.0
+pyyaml>=6.0

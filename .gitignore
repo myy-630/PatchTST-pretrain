@@ -1,0 +1,34 @@
+# Python/runtime
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+venv/
+.venv/
+.claude/
+*.log
+
+# Local data and generated artifacts
+AF/
+records_npy/
+quality_mask_v3.csv
+valid_windows.csv
+window_index.csv
+debug_output/
+diagnosis_output/
+kaggle_outputs/
+outputs/
+
+# Kaggle data publish tree is too large for git.
+kaggle_upload/shd-af-clean-data/
+
+# Legacy data-cleaning artifacts not needed for the active training repo.
+archive/
+
+# Secrets and local environment
+.env
+.env.*
+kaggle.json
+*.key
+*.pem
