@@ -19,6 +19,7 @@ debug_output/
 diagnosis_output/
 kaggle_outputs/
 outputs/
+dist/
 
 # Kaggle data publish tree is too large for git.
 kaggle_upload/shd-af-clean-data/
