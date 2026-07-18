@@ -57,7 +57,7 @@ def main() -> None:
     repo_root = Path.cwd()
     base_config = repo_root / args.base_config
     output_root = Path(args.output_root) / f"{args.backend}_{args.mixed_precision}_{time.strftime('%Y%m%d_%H%M%S')}"
-    config_root = output_root / "configs"
+    config_root = repo_root / ".tmp_batch_sweep" / f"{args.backend}_{args.mixed_precision}_{time.strftime('%Y%m%d_%H%M%S')}"
     config_root.mkdir(parents=True, exist_ok=True)
 
     rows: list[dict] = []
@@ -115,8 +115,8 @@ def main() -> None:
 
         rows.append(row)
 
-        if proc.returncode != 0 and ("out of memory" in log_text.lower() or "cuda" in log_text.lower()):
-            print("Stopping sweep after CUDA-related failure.", flush=True)
+        if proc.returncode != 0 and "out of memory" in log_text.lower():
+            print("Stopping sweep after out-of-memory failure.", flush=True)
             break
 
     df = pd.DataFrame(rows)
@@ -143,4 +143,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
