@@ -57,7 +57,8 @@ def main() -> None:
     repo_root = Path.cwd()
     base_config = repo_root / args.base_config
     output_root = Path(args.output_root) / f"{args.backend}_{args.mixed_precision}_{time.strftime('%Y%m%d_%H%M%S')}"
-    config_root = repo_root / ".tmp_batch_sweep" / f"{args.backend}_{args.mixed_precision}_{time.strftime('%Y%m%d_%H%M%S')}"
+    run_id = f"{args.backend}_{args.mixed_precision}_{time.strftime('%Y%m%d_%H%M%S')}"
+    config_root = repo_root / "configs"
     config_root.mkdir(parents=True, exist_ok=True)
 
     rows: list[dict] = []
@@ -65,7 +66,7 @@ def main() -> None:
     for bs in args.batches:
         run_dir = output_root / f"bs{bs}"
         run_dir.mkdir(parents=True, exist_ok=True)
-        cfg_path = config_root / f"bs{bs}.yaml"
+        cfg_path = config_root / f"_tmp_batch_sweep_{run_id}_bs{bs}.yaml"
         log_path = run_dir / "run.log"
         write_config(base_config, cfg_path, bs, run_dir, args)
 
