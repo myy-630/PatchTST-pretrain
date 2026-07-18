@@ -3,7 +3,12 @@ set -euo pipefail
 
 cd "$(dirname "$0")/../.."
 
-python3 -m venv --system-site-packages .venv
+if ! command -v python >/dev/null 2>&1 && [[ -f /root/miniconda3/etc/profile.d/conda.sh ]]; then
+  source /root/miniconda3/etc/profile.d/conda.sh
+  conda activate base
+fi
+
+python -m venv --system-site-packages .venv
 source .venv/bin/activate
 
 python -m pip install --upgrade pip setuptools wheel
