@@ -3,7 +3,7 @@ set -euo pipefail
 
 cd "$(dirname "$0")/../.."
 
-python3 -m venv .venv
+python3 -m venv --system-site-packages .venv
 source .venv/bin/activate
 
 python -m pip install --upgrade pip setuptools wheel
@@ -28,4 +28,3 @@ else:
 PY
 
 echo "Environment setup complete."
-
