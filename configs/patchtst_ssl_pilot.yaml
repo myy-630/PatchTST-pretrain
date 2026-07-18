@@ -16,6 +16,7 @@ data:
   val_csv:   "splits/val.csv"
   test_csv:  "splits/test.csv"         # NOT used in pretraining
   data_dir:  "raw_wfdb/"
+  backend:   "wfdb"
   seq_len:   6000                       # 30 s × 200 Hz  [ECG fixed]
   n_channels: 2                         # Lead I + Lead II  [ECG fixed]
 
@@ -40,7 +41,7 @@ model:
 # ── Training ──────────────────────────────────────
 training:
   epochs:      3                        # PILOT
-  batch_size:  32
+  batch_size:  128
   optimizer:   "adamw"
   lr:          1.0e-3
   weight_decay: 0.0
