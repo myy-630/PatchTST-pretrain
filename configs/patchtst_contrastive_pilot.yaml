@@ -1,0 +1,55 @@
+# PatchTST Contrastive Pretraining - Pilot Configuration
+
+data:
+  train_csv: "splits/train.csv"
+  val_csv:   "splits/val.csv"
+  test_csv:  "splits/test.csv"         # never used for pretraining/selection
+  data_dir:  "raw_wfdb"
+  backend:   "wfdb"
+  seq_len:   6000
+  n_channels: 2
+
+pretrain:
+  patch_len:   50
+  stride:      50
+  patch_num:   120
+  mask_ratio:  0.4                     # unused by contrastive; kept for shared validation
+  mask_type:   "none"                  # unused by contrastive
+  revin_norm:  true
+
+contrastive:
+  objective: "nt_xent"
+  temperature: 0.1
+  augmentation_strength: "medium"
+  projection_hidden_dim: 256
+  projection_dim: 128
+
+model:
+  d_model:     128
+  n_heads:     16
+  n_layers:    3
+  d_ff:        256
+  dropout:     0.1
+  max_patches: 1024
+
+training:
+  epochs:      3
+  batch_size:  128
+  optimizer:   "adamw"
+  lr:          1.0e-3
+  weight_decay: 0.0
+  grad_clip:   1.0
+  scheduler:   "none"
+  warmup_epochs: 0
+  seed:        42
+  num_workers: 2
+  mixed_precision: "fp32"
+  device:      "cuda"
+
+checkpoint:
+  save_dir:     "checkpoints/contrastive_pilot"
+  save_best:    true
+  monitor:      "val_loss"
+  mode:         "min"
+  save_last:    true
+  resume:       false
